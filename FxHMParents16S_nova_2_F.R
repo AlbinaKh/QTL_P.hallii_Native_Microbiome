@@ -516,8 +516,142 @@ field_phy_plot <- parentsm_data %>%
                theme(axis.text.x = element_text(angle = 45, hjust = 1))+
                labs(x = "Phylum", y = "") +
                coord_equal()
+
+
             
+    ## similarity in field and greenhouse
+                
+                parentsm_data2 <- counts3 %>% 
+                  as.data.frame() %>% 
+                  rownames_to_column("SampleID") %>% 
+                  gather(ASVID, value, -SampleID) %>% 
+                  inner_join(total_map) %>% 
+                  group_by(SampleID) %>% 
+                mutate(RA = value / sum(value) * 100)
+                
+       # Rhizosphere         
+               
+                f_gh_mod_Rhizo <- parentsm_data2 %>%
+                  filter(Compartment%in%c("Rhizo")) %>%
+                  mutate(TRT2 = ifelse(TRT%in%c("Austin", "HI"), "Austin", "Corpus")) %>%
+                  filter(!TRT%in%c("MFI", "MHI")) #%>%
+                  group_by( Location, ASVID) %>%
+                 filter(sum(RA > 0)/ n() > 0.3) %>%
+                  nest() %>%
+                  mutate(mod = map(data, ~tidy(lm(log2(RA + 1) ~ TRT2, .)))) %>%
+                  unnest(mod) %>% select(-data)
+                
+    ## Count differentially abundant microbes between AUS/Corpus in field and greenhouse inoculation
+                
+                f_gh_mod_Rhizo %>%
+                  ungroup() %>%
+                  filter(term != "(Intercept)") %>%
+                  group_by(Location) %>%
+                  mutate(padj = p.adjust(p.value, "BH")) %>%
+                  mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+                  filter(padj < 0.05) %>%
+                  ungroup() %>%
+                  dplyr::count(Location, direction)
+          
+                
+    ## Find overlapping in directionality between the greenhouse and field settings
+                f_gh_mod_RhizoF <-   f_gh_mod_Rhizo %>%
+                  ungroup() %>%
+                  filter(term != "(Intercept)") %>%
+                  group_by(Location) %>%
+                  mutate(padj = p.adjust(p.value, "BH")) %>%
+                  mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+                  filter(padj < 0.05) %>%
+                  ungroup() %>%
+                  dplyr::count(ASVID, direction) %>%
+                  filter(n == 2)  %>%            
+                 print (n=39)
+         
+             
+             
+    # Root
+        
+             
+             f_gh_mod_Root <- parentsm_data2 %>%
+               filter(Compartment%in%c("Root")) %>%
+              
+               mutate(TRT2 = ifelse(TRT%in%c("Austin", "HI"), "Austin", "Corpus")) %>%
+               filter(!TRT%in%c("MFI", "MHI")) %>%
+              
+               group_by(Location, ASVID) %>%
+               filter(sum(RA > 0)/ n() > 0.3) %>%
+               nest() %>%
+               mutate(mod = map(data, ~tidy(lm(log2(RA + 1) ~ TRT2, .)))) %>%
+               unnest(mod) %>% select(-data)
+             
+             ## Count differentially abundant microbes between AUS/Corpus in field and greenhouse inoculation
+             
+             f_gh_mod_Root %>%
+               ungroup() %>%
+               filter(term != "(Intercept)") %>%
+               group_by(Location) %>%
+               mutate(padj = p.adjust(p.value, "BH")) %>%
+               mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+               filter(padj < 0.05) %>%
+               ungroup() %>%
+               dplyr::count(Location, direction)
+             
+             
+             ## Find overlapping in directionality between the greenhouse and field settings
+             f_gh_mod_Rootf <-        f_gh_mod_Root %>%
+               ungroup() %>%
+               filter(term != "(Intercept)") %>%
+               group_by(Location) %>%
+               mutate(padj = p.adjust(p.value, "BH")) %>%
+               mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+               filter(padj < 0.05) %>%
+               ungroup() %>%
+               dplyr::count(ASVID, direction) %>%
+               filter(n == 2)
             
+             
+  
+             
+     # Soil
+             
+             
+             f_gh_mod_Soil <- parentsm_data2 %>%
+               filter(Compartment%in%c("Soil")) %>%
+               
+               mutate(TRT2 = ifelse(TRT%in%c("Austin", "HI"), "Austin", "Corpus")) %>%
+               filter(!TRT%in%c("MFI", "MHI")) %>%
+             
+               group_by(Location, ASVID) %>%
+              filter(sum(RA > 0)/ n() > 0.3) %>%
+               nest() %>%
+               mutate(mod = map(data, ~tidy(lm(log2(RA + 1) ~ TRT2, .)))) %>%
+               unnest(mod) %>% select(-data)
+             
+             ## Count differentially abundant microbes between AUS/Corpus in field and greenhouse inoculation
+             
+             f_gh_mod_Soil %>%
+               ungroup() %>%
+               filter(term != "(Intercept)") %>%
+               group_by(Location) %>%
+               mutate(padj = p.adjust(p.value, "BH")) %>%
+               mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+               filter(padj < 0.05) %>%
+               ungroup() %>%
+               dplyr::count(Location, direction)
+             
+             
+             ## Find overlapping in directionality between the greenhouse and field settings
+             f_gh_mod_Soil<-   f_gh_mod_Soil %>%
+               ungroup() %>%
+               filter(term != "(Intercept)") %>%
+               group_by(Location) %>%
+               mutate(padj = p.adjust(p.value, "BH")) %>%
+               mutate(direction = ifelse(estimate < 0, "Austin", "Corpus")) %>%
+               filter(padj < 0.05) %>%
+               ungroup() %>%
+               dplyr::count(ASVID, direction) %>%
+               filter(n == 2)  %>%            
+               print (n=39)        
             
                 
                
